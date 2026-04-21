@@ -1,0 +1,14 @@
+{
+  "pages": [
+    "pages/index/index"
+  ],
+  "window": {
+    "navigationBarTitleText": "斗牛计算器",
+    "navigationBarBackgroundColor": "#1f2329",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#111317",
+    "backgroundTextStyle": "dark"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

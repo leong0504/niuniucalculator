@@ -1,0 +1,32 @@
+<view class="page">
+  <view class="top">
+    <view class="nav-title">牛牛计算器</view>
+    <view class="result-main">🐮 {{result.typeName}} 🐮</view>
+
+    <view class="cards">
+      <block wx:for="{{selectedCards}}" wx:key="index">
+        <view class="card {{index === flipIndex ? 'card-flip-in' : ''}}">{{item.label}}</view>
+      </block>
+      <block wx:for="{{emptySlots}}" wx:key="slot">
+        <view class="card empty">
+          <view class="card-back">
+            <image class="card-back-image" src="../../assets/card-back.png" mode="aspectFit"></image>
+          </view>
+        </view>
+      </block>
+    </view>
+
+    <view class="picked">已选 {{selectedCards.length}}/5</view>
+  </view>
+
+  <view class="kb-wrap">
+    <view class="kb">
+      <block wx:for="{{ranks}}" wx:key="rank">
+        <view class="key" data-rank="{{item}}" bindtap="onPickRank">{{item}}</view>
+      </block>
+      <view class="key special" bindtap="onPickSpadeA">♠A</view>
+      <view class="key action" bindtap="onUndo">←</view>
+      <view class="key action" bindtap="onReset">↻</view>
+    </view>
+  </view>
+</view>

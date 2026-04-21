@@ -1,0 +1,52 @@
+{
+  "description": "斗牛计算器小程序",
+  "packOptions": {
+    "ignore": [],
+    "include": []
+  },
+  "setting": {
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    },
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "minified": true,
+    "newFeature": true,
+    "coverView": true,
+    "nodeModules": false,
+    "autoAudits": false,
+    "showShadowRootInWxmlPanel": true,
+    "scopeDataCheck": false,
+    "checkInvalidKey": true,
+    "checkSiteMap": true,
+    "uploadWithSourceMap": true,
+    "compileHotReLoad": true,
+    "useMultiFrameRuntime": true,
+    "useApiHook": true,
+    "useApiHostProcess": true,
+    "packNpmManually": false,
+    "minifyWXSS": true,
+    "minifyWXML": true,
+    "compileWorklet": false,
+    "uglifyFileName": false,
+    "packNpmRelationList": [],
+    "localPlugins": false,
+    "disableUseStrict": false,
+    "useCompilerPlugins": false,
+    "condition": false,
+    "swc": false,
+    "disableSWC": true
+  },
+  "compileType": "miniprogram",
+  "miniprogramRoot": "miniprogram/",
+  "libVersion": "3.15.2",
+  "appid": "wx051bd25f4efc234e",
+  "projectname": "bull-calc-miniapp",
+  "simulatorType": "wechat",
+  "condition": {},
+  "simulatorPluginLibVersion": {},
+  "editorSetting": {}
+}
