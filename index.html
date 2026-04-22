@@ -4,14 +4,15 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>牛牛計算器</title>
-    <link rel="stylesheet" href="./style.css?v=20260422-1" />
+    <link rel="stylesheet" href="./style.css?v=20260422-2" />
   </head>
   <body>
     <main class="page">
       <section class="top">
+        <button class="rules-btn" id="rulesBtn" type="button" aria-label="遊戲規則">!</button>
         <h1 class="nav-title">牛牛計算器</h1>
         <p class="result-main">🐮 <span id="resultType">等待選牌</span> 🐮</p>
-        <p class="result-detail" id="resultDetail">請選擇 5 張牌</p>
+        <p class="result-detail" id="resultDetail"></p>
 
         <div class="cards" id="cards"></div>
         <p class="picked">已選 <span id="pickedCount">0</span>/5</p>
@@ -22,6 +23,26 @@
       </section>
     </main>
 
-    <script src="./script.js?v=20260422-1"></script>
+    <div class="rules-overlay" id="rulesOverlay" hidden>
+      <div class="rules-dialog" role="dialog" aria-modal="true" aria-labelledby="rulesTitle">
+        <div class="rules-header">
+          <h2 class="rules-title" id="rulesTitle">遊戲規則</h2>
+          <button class="rules-close" id="rulesClose" type="button" aria-label="關閉">×</button>
+        </div>
+        <div class="rules-content">
+          <ul class="rules-list">
+            <li>一次選 5 張牌，計算牌型。</li>
+            <li>A 按 1 點；J/Q/K/10 按 10 點；2–9 按牌面點數。</li>
+            <li>本工具規則：<strong>3 和 6 可互換數值</strong>（3 可當 6，6 可當 3）。</li>
+            <li>先找 3 張合計為 10 的倍數（可用 3/6 互換值），其餘 2 張的和對 10 取餘即為牛點。</li>
+            <li><strong>炸彈（特殊）</strong>：只要存在任一種成牛拆法，能讓剩下 2 張剛好是 <strong>10 + ♠A</strong>，就直接判定為炸彈（優先於牛點大小）。</li>
+            <li><strong>炸彈（自然）</strong>：4 張同點數。</li>
+            <li>其他特殊牌型：五小牛、五花牛、四花牛。</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <script src="./script.js?v=20260422-2"></script>
   </body>
 </html>

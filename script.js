@@ -41,10 +41,36 @@ const keyboardEl = document.getElementById("keyboard");
 const resultTypeEl = document.getElementById("resultType");
 const resultDetailEl = document.getElementById("resultDetail");
 const pickedCountEl = document.getElementById("pickedCount");
+const rulesBtnEl = document.getElementById("rulesBtn");
+const rulesOverlayEl = document.getElementById("rulesOverlay");
+const rulesCloseEl = document.getElementById("rulesClose");
 
 function init() {
+  initRulesDialog();
   renderKeyboard();
   render();
+}
+
+function initRulesDialog() {
+  if (!rulesBtnEl || !rulesOverlayEl || !rulesCloseEl) return;
+
+  const open = () => {
+    rulesOverlayEl.hidden = false;
+  };
+  const close = () => {
+    rulesOverlayEl.hidden = true;
+  };
+
+  rulesBtnEl.addEventListener("click", open);
+  rulesCloseEl.addEventListener("click", close);
+
+  rulesOverlayEl.addEventListener("click", (e) => {
+    if (e.target === rulesOverlayEl) close();
+  });
+
+  window.addEventListener("keydown", (e) => {
+    if (!rulesOverlayEl.hidden && e.key === "Escape") close();
+  });
 }
 
 function renderKeyboard() {
