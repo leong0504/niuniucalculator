@@ -262,3 +262,55 @@ body {
 .key:active {
   transform: translateY(1px);
 }
+
+@media (max-width: 480px) {
+  body {
+    min-height: 100dvh;
+  }
+
+  .page {
+    min-height: 100dvh;
+    height: 100dvh;
+    padding: 10px 10px 10px;
+    overflow: hidden;
+  }
+
+  .top {
+    flex: 0 0 auto;
+  }
+
+  .nav-title {
+    font-size: 24px;
+  }
+
+  .result-main {
+    margin-top: 2px;
+    font-size: 44px;
+  }
+
+  .cards {
+    margin-top: 10px;
+  }
+
+  .picked {
+    margin-top: 8px;
+  }
+
+  .kb-wrap {
+    margin-top: 8px;
+  }
+
+  .kb {
+    gap: 6px;
+    padding-top: 8px;
+  }
+
+  .key {
+    height: 68px;
+    font-size: 34px;
+  }
+
+  .key.action {
+    font-size: 36px;
+  }
+}
