@@ -18,6 +18,7 @@ const TYPE_NAME = {
   NO_BULL: "無牛",
   BULL: "有牛",
   BULL_BULL: "牛牛",
+  PAIR: "對子",
   FOUR_FLOWER: "四花牛",
   FIVE_FLOWER: "五花牛",
   FIVE_SMALL: "五小牛",
@@ -195,11 +196,16 @@ function evaluateHand(cards) {
     type = "FOUR_FLOWER";
     detail = "4 張是 J/Q/K";
   } else if (bullInfo.hasBull) {
-    bullIdx = bullInfo.bullIdx;
-    if (bullInfo.bullPoint === 0) {
+    if (bullInfo.pairHand) {
+      bullIdx = bullInfo.pairBullIdx;
+      type = "PAIR";
+      detail = "命中對子";
+    } else if (bullInfo.bullPoint === 0) {
+      bullIdx = bullInfo.bullIdx;
       type = "BULL_BULL";
       detail = "後 2 張合計為 10";
     } else {
+      bullIdx = bullInfo.bullIdx;
       type = "BULL";
       detail = `牛${bullInfo.bullPoint}`;
     }
@@ -225,6 +231,7 @@ function formatBullName(point) {
 
 function getBestBullInfo(cards) {
   const n = cards.length;
+  const preferNormalAInBull = hasSpadeAAndNormalA(cards);
   let best = {
     hasBull: false,
     bullPoint: -1,
@@ -234,6 +241,12 @@ function getBestBullInfo(cards) {
     specialBombCandidate: false
   };
   let bestSpecial = {
+    ok: false,
+    point: -1,
+    bullIdx: [],
+    nonBullIdx: []
+  };
+  let bestPair = {
     ok: false,
     point: -1,
     bullIdx: [],
@@ -259,11 +272,25 @@ function getBestBullInfo(cards) {
         const specialBombCandidate =
           nonBullTwo.length === 2 &&
           nonBullTwo.some((c) => c.isSpadeA) &&
-          nonBullTwo.some((c) => c.rank === "10");
+          nonBullTwo.some((c) => ["J", "Q", "K"].includes(c.rank));
+        const pairCandidate =
+          nonBullTwo.length === 2 &&
+          nonBullTwo[0].rank === nonBullTwo[1].rank;
 
+        const normalAInBull = bullIdx.some((idx) => cards[idx].rank === "A" && !cards[idx].isSpadeA);
+        const bestSpecialNormalAInBull = bestSpecial.ok
+          ? bestSpecial.bullIdx.some((idx) => cards[idx].rank === "A" && !cards[idx].isSpadeA)
+          : false;
         if (
           specialBombCandidate &&
-          (!bestSpecial.ok || point > bestSpecial.point)
+          (
+            !bestSpecial.ok ||
+            getBullScore(point) > getBullScore(bestSpecial.point) ||
+            (getBullScore(point) === getBullScore(bestSpecial.point) &&
+              preferNormalAInBull &&
+              normalAInBull &&
+              !bestSpecialNormalAInBull)
+          )
         ) {
           bestSpecial = {
             ok: true,
@@ -272,11 +299,40 @@ function getBestBullInfo(cards) {
             nonBullIdx
           };
         }
+        const bestPairNormalAInBull = bestPair.ok
+          ? bestPair.bullIdx.some((idx) => cards[idx].rank === "A" && !cards[idx].isSpadeA)
+          : false;
+        if (
+          pairCandidate &&
+          (
+            !bestPair.ok ||
+            getBullScore(point) > getBullScore(bestPair.point) ||
+            (getBullScore(point) === getBullScore(bestPair.point) &&
+              preferNormalAInBull &&
+              normalAInBull &&
+              !bestPairNormalAInBull)
+          )
+        ) {
+          bestPair = {
+            ok: true,
+            point,
+            bullIdx,
+            nonBullIdx
+          };
+        }
 
+        const bestNormalAInBull = best.hasBull
+          ? best.bullIdx.some((idx) => cards[idx].rank === "A" && !cards[idx].isSpadeA)
+          : false;
         if (
           !best.hasBull ||
-          point > best.bullPoint ||
-          (point === best.bullPoint && specialBombCandidate && !best.specialBombCandidate)
+          getBullScore(point) > getBullScore(best.bullPoint) ||
+          (point === best.bullPoint && specialBombCandidate && !best.specialBombCandidate) ||
+          (getBullScore(point) === getBullScore(best.bullPoint) &&
+            specialBombCandidate === best.specialBombCandidate &&
+            preferNormalAInBull &&
+            normalAInBull &&
+            !bestNormalAInBull)
         ) {
           const bullCardsText = bullIdx.map((idx) => cards[idx].label).join("+");
           const nonBullCardsText = nonBullIdx.map((idx) => cards[idx].label).join("+");
@@ -299,7 +355,10 @@ function getBestBullInfo(cards) {
     ...best,
     specialBomb: bestSpecial.ok,
     specialBullIdx: bestSpecial.ok ? bestSpecial.bullIdx : [],
-    specialNonBullIdx: bestSpecial.ok ? bestSpecial.nonBullIdx : []
+    specialNonBullIdx: bestSpecial.ok ? bestSpecial.nonBullIdx : [],
+    pairHand: bestPair.ok,
+    pairBullIdx: bestPair.ok ? bestPair.bullIdx : [],
+    pairNonBullIdx: bestPair.ok ? bestPair.nonBullIdx : []
   };
 }
 
@@ -319,7 +378,7 @@ function searchBullMatch(bullValueList, nonBullValueList) {
             const sum2 = nonBullValueList[0][d] + nonBullValueList[1][e];
             const point = sum2 % 10;
             hasMatch = true;
-            if (point > bestPoint) {
+            if (getBullScore(point) > getBullScore(bestPoint)) {
               bestPoint = point;
               bestBullPickedValues = [bullValueList[0][a], bullValueList[1][b], bullValueList[2][c]];
               bestNonBullPickedValues = [nonBullValueList[0][d], nonBullValueList[1][e]];
@@ -337,6 +396,17 @@ function searchBullMatch(bullValueList, nonBullValueList) {
         nonBullPickedValues: bestNonBullPickedValues
       }
     : { ok: false, point: -1, bullPickedValues: [], nonBullPickedValues: [] };
+}
+
+function getBullScore(point) {
+  if (point < 0) return -1;
+  return point === 0 ? 10 : point;
+}
+
+function hasSpadeAAndNormalA(cards) {
+  const hasSpadeA = cards.some((c) => c.rank === "A" && c.isSpadeA);
+  const hasNormalA = cards.some((c) => c.rank === "A" && !c.isSpadeA);
+  return hasSpadeA && hasNormalA;
 }
 
 function getValuesWithSwap(rank) {

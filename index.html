@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>牛牛計算器</title>
-    <link rel="stylesheet" href="./style.css?v=20260422-3" />
+    <link rel="stylesheet" href="./style.css?v=20260422-4" />
   </head>
   <body>
     <main class="page">
@@ -35,7 +35,9 @@
             <li>A 按 1 點；J/Q/K/10 按 10 點；2–9 按牌面點數；<strong>♠A 為特殊牌</strong>。</li>
             <li>本工具規則：<strong>3 和 6 可互換數值</strong>（3 可當 6，6 可當 3）。</li>
             <li>先找 3 張合計為 10 的倍數（可用 3/6 互換值），其餘 2 張的和對 10 取餘即為牛點。</li>
-            <li><strong>炸彈（特殊）</strong>：只要存在任一種成牛拆法，能讓剩下 2 張剛好是 <strong>10 + ♠A</strong>，就直接判定為炸彈（優先於牛點大小）。</li>
+            <li><strong>炸彈（特殊）</strong>：只要存在任一種成牛拆法，能讓剩下 2 張剛好是 <strong>♠A + J/Q/K（任一）</strong>，就直接判定為炸彈（優先於牛點大小）。</li>
+            <li><strong>對子</strong>：若有 3 張可組成 10 的倍數，且剩下 2 張同點數，判定為對子。</li>
+            <li><strong>牛牛</strong>：若有 3 張可組成 10 的倍數，且剩下 2 張合計也是 10 的倍數，判定為牛牛。</li>
             <li><strong>炸彈（自然）</strong>：4 張同點數。</li>
             <li>其他特殊牌型：五小牛、五花牛、四花牛。</li>
           </ul>
@@ -43,6 +45,6 @@
       </div>
     </div>
 
-    <script src="./script.js?v=20260422-3"></script>
+    <script src="./script.js?v=20260422-4"></script>
   </body>
 </html>
