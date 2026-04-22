@@ -149,7 +149,7 @@ function evaluateHand(cards) {
   const fourFlower = isFourFlower(rankList);
 
   const bullInfo = getBestBullInfo(cards);
-  const specialBomb = bullInfo.hasBull && bullInfo.specialBombCandidate;
+  const specialBomb = bullInfo.specialBomb;
 
   let type = "NO_BULL";
   let detail = "無法組成牛";
@@ -158,7 +158,7 @@ function evaluateHand(cards) {
   if (hasNaturalBomb || specialBomb) {
     type = "BOMB";
     detail = hasNaturalBomb ? "命中自然炸彈" : "命中黑桃 A 特殊炸彈";
-    bullIdx = bullInfo.hasBull ? bullInfo.bullIdx : [];
+    bullIdx = specialBomb ? bullInfo.specialBullIdx : bullInfo.hasBull ? bullInfo.bullIdx : [];
   } else if (fiveSmall) {
     type = "FIVE_SMALL";
     detail = "5 張都小於 5 且總和 <= 10";
@@ -207,6 +207,12 @@ function getBestBullInfo(cards) {
     bullText: "",
     specialBombCandidate: false
   };
+  let bestSpecial = {
+    ok: false,
+    point: -1,
+    bullIdx: [],
+    nonBullIdx: []
+  };
 
   for (let i = 0; i < n - 2; i += 1) {
     for (let j = i + 1; j < n - 1; j += 1) {
@@ -227,7 +233,19 @@ function getBestBullInfo(cards) {
         const specialBombCandidate =
           nonBullTwo.length === 2 &&
           nonBullTwo.some((c) => c.isSpadeA) &&
-          nonBullTwo.some((c) => ["J", "Q", "K"].includes(c.rank));
+          nonBullTwo.some((c) => c.rank === "10");
+
+        if (
+          specialBombCandidate &&
+          (!bestSpecial.ok || point > bestSpecial.point)
+        ) {
+          bestSpecial = {
+            ok: true,
+            point,
+            bullIdx,
+            nonBullIdx
+          };
+        }
 
         if (
           !best.hasBull ||
@@ -251,7 +269,12 @@ function getBestBullInfo(cards) {
     }
   }
 
-  return best;
+  return {
+    ...best,
+    specialBomb: bestSpecial.ok,
+    specialBullIdx: bestSpecial.ok ? bestSpecial.bullIdx : [],
+    specialNonBullIdx: bestSpecial.ok ? bestSpecial.nonBullIdx : []
+  };
 }
 
 function searchBullMatch(bullValueList, nonBullValueList) {
@@ -317,14 +340,6 @@ function isFiveFlower(rankList) {
 function isFourFlower(rankList) {
   const flowerCount = rankList.filter((r) => ["J", "Q", "K"].includes(r)).length;
   return flowerCount >= 4;
-}
-
-function isSpecialSpadeABomb(cards, nonBullIdx) {
-  if (!nonBullIdx || nonBullIdx.length !== 2) return false;
-  const two = nonBullIdx.map((idx) => cards[idx]);
-  const hasSpadeA = two.some((c) => c.isSpadeA);
-  const hasFlower = two.some((c) => ["J", "Q", "K"].includes(c.rank));
-  return hasSpadeA && hasFlower;
 }
 
 function getMaxCard(cards) {
