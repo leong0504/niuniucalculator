@@ -58,6 +58,10 @@ body {
   z-index: 999;
 }
 
+.rules-overlay[hidden] {
+  display: none;
+}
+
 .rules-dialog {
   width: min(560px, 100%);
   border-radius: 16px;
