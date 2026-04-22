@@ -29,9 +29,10 @@ const ranks = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"]
 const state = {
   selectedCards: [],
   flipIndex: -1,
+  highlightIndices: [],
   result: {
     typeName: "等待選牌",
-    detail: "請選擇 5 張牌"
+    detail: ""
   }
 };
 
@@ -96,7 +97,8 @@ function updateState(selectedCards, flipIndex = -1) {
   state.result =
     selectedCards.length === 5
       ? evaluateHand(selectedCards)
-      : { typeName: "等待選牌", detail: "請選擇 5 張牌" };
+      : { typeName: "等待選牌", detail: "" };
+  state.highlightIndices = selectedCards.length === 5 && state.result.bullIdx ? state.result.bullIdx : [];
   render();
 }
 
@@ -105,8 +107,18 @@ function render() {
 
   state.selectedCards.forEach((card, idx) => {
     const cardEl = document.createElement("div");
-    cardEl.className = `card ${idx === state.flipIndex ? "card-flip-in" : ""}`.trim();
-    cardEl.textContent = card.label;
+    cardEl.className = `card ${idx === state.flipIndex ? "card-flip-in" : ""} ${
+      state.highlightIndices.includes(idx) ? "bull-group" : ""
+    }`.trim();
+    if (card.label.length >= 2) {
+      cardEl.classList.add("card-wide-text");
+    }
+    const front = document.createElement("div");
+    front.className = "card-front";
+    const text = document.createElement("span");
+    text.textContent = card.label;
+    front.appendChild(text);
+    cardEl.appendChild(front);
     cardsEl.appendChild(cardEl);
   });
 
@@ -115,14 +127,14 @@ function render() {
     empty.className = "card empty";
     empty.innerHTML = `
       <div class="card-back">
-        <img src="./miniprogram/assets/card-back.svg" alt="card back" />
+        <img src="./miniprogram/assets/card-back.png" alt="card back" />
       </div>
     `;
     cardsEl.appendChild(empty);
   }
 
   resultTypeEl.textContent = state.result.typeName;
-  resultDetailEl.textContent = state.result.detail;
+  resultDetailEl.textContent = state.result.detail || "";
   pickedCountEl.textContent = String(state.selectedCards.length);
 }
 
@@ -137,16 +149,16 @@ function evaluateHand(cards) {
   const fourFlower = isFourFlower(rankList);
 
   const bullInfo = getBestBullInfo(cards);
-  const specialBomb = bullInfo.hasBull && isSpecialSpadeABomb(cards, bullInfo.nonBullIdx);
+  const specialBomb = bullInfo.hasBull && bullInfo.specialBombCandidate;
 
   let type = "NO_BULL";
   let detail = "無法組成牛";
+  let bullIdx = [];
 
   if (hasNaturalBomb || specialBomb) {
     type = "BOMB";
-    detail = hasNaturalBomb
-      ? "命中自然炸彈：4 張同點數"
-      : `命中黑桃 A 特殊炸彈：${bullInfo.bullText}，後 2 張為花牌 + ♠A`;
+    detail = hasNaturalBomb ? "命中自然炸彈" : "命中黑桃 A 特殊炸彈";
+    bullIdx = bullInfo.hasBull ? bullInfo.bullIdx : [];
   } else if (fiveSmall) {
     type = "FIVE_SMALL";
     detail = "5 張都小於 5 且總和 <= 10";
@@ -157,12 +169,13 @@ function evaluateHand(cards) {
     type = "FOUR_FLOWER";
     detail = "4 張是 J/Q/K";
   } else if (bullInfo.hasBull) {
+    bullIdx = bullInfo.bullIdx;
     if (bullInfo.bullPoint === 0) {
       type = "BULL_BULL";
-      detail = `成牛：${bullInfo.bullText}，後 2 張合計為 10`;
+      detail = "後 2 張合計為 10";
     } else {
       type = "BULL";
-      detail = `成牛：${bullInfo.bullText}，牛${bullInfo.bullPoint}`;
+      detail = `牛${bullInfo.bullPoint}`;
     }
   }
 
@@ -173,7 +186,8 @@ function evaluateHand(cards) {
 
   return {
     typeName,
-    detail: `${detail}；最大牌：${maxCard}`
+    detail: "",
+    bullIdx
   };
 }
 
@@ -190,7 +204,8 @@ function getBestBullInfo(cards) {
     bullPoint: -1,
     bullIdx: [],
     nonBullIdx: [],
-    bullText: ""
+    bullText: "",
+    specialBombCandidate: false
   };
 
   for (let i = 0; i < n - 2; i += 1) {
@@ -208,13 +223,28 @@ function getBestBullInfo(cards) {
 
         if (!matched.ok) continue;
         const point = matched.point;
-        if (!best.hasBull || point > best.bullPoint) {
+        const nonBullTwo = nonBullIdx.map((idx) => cards[idx]);
+        const specialBombCandidate =
+          nonBullTwo.length === 2 &&
+          nonBullTwo.some((c) => c.isSpadeA) &&
+          nonBullTwo.some((c) => ["J", "Q", "K"].includes(c.rank));
+
+        if (
+          !best.hasBull ||
+          point > best.bullPoint ||
+          (point === best.bullPoint && specialBombCandidate && !best.specialBombCandidate)
+        ) {
+          const bullCardsText = bullIdx.map((idx) => cards[idx].label).join("+");
+          const nonBullCardsText = nonBullIdx.map((idx) => cards[idx].label).join("+");
+          const bullValuesText = matched.bullPickedValues.join("+");
+          const nonBullValuesText = matched.nonBullPickedValues.join("+");
           best = {
             hasBull: true,
             bullPoint: point,
             bullIdx,
             nonBullIdx,
-            bullText: `第${i + 1}/${j + 1}/${k + 1}張組成 10 倍數`
+            bullText: `${bullCardsText}（按值 ${bullValuesText}）組成 10 倍數；剩餘 ${nonBullCardsText}（按值 ${nonBullValuesText}）`,
+            specialBombCandidate
           };
         }
       }
@@ -225,6 +255,11 @@ function getBestBullInfo(cards) {
 }
 
 function searchBullMatch(bullValueList, nonBullValueList) {
+  let hasMatch = false;
+  let bestPoint = -1;
+  let bestBullPickedValues = [];
+  let bestNonBullPickedValues = [];
+
   for (let a = 0; a < bullValueList[0].length; a += 1) {
     for (let b = 0; b < bullValueList[1].length; b += 1) {
       for (let c = 0; c < bullValueList[2].length; c += 1) {
@@ -233,16 +268,26 @@ function searchBullMatch(bullValueList, nonBullValueList) {
         for (let d = 0; d < nonBullValueList[0].length; d += 1) {
           for (let e = 0; e < nonBullValueList[1].length; e += 1) {
             const sum2 = nonBullValueList[0][d] + nonBullValueList[1][e];
-            return {
-              ok: true,
-              point: sum2 % 10
-            };
+            const point = sum2 % 10;
+            hasMatch = true;
+            if (point > bestPoint) {
+              bestPoint = point;
+              bestBullPickedValues = [bullValueList[0][a], bullValueList[1][b], bullValueList[2][c]];
+              bestNonBullPickedValues = [nonBullValueList[0][d], nonBullValueList[1][e]];
+            }
           }
         }
       }
     }
   }
-  return { ok: false, point: -1 };
+  return hasMatch
+    ? {
+        ok: true,
+        point: bestPoint,
+        bullPickedValues: bestBullPickedValues,
+        nonBullPickedValues: bestNonBullPickedValues
+      }
+    : { ok: false, point: -1, bullPickedValues: [], nonBullPickedValues: [] };
 }
 
 function getValuesWithSwap(rank) {

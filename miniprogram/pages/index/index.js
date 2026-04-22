@@ -184,12 +184,16 @@ function getBestBullInfo(cards) {
         if (!matched.ok) continue;
         const point = matched.point;
         if (!best.hasBull || point > best.bullPoint) {
+          const bullCardsText = bullIdx.map((idx) => cards[idx].label).join("+");
+          const nonBullCardsText = nonBullIdx.map((idx) => cards[idx].label).join("+");
+          const bullValuesText = matched.bullPickedValues.join("+");
+          const nonBullValuesText = matched.nonBullPickedValues.join("+");
           best = {
             hasBull: true,
             bullPoint: point,
             bullIdx,
             nonBullIdx,
-            bullText: `第${i + 1}/${j + 1}/${k + 1}张组成10倍数`
+            bullText: `${bullCardsText}（按值 ${bullValuesText}）组成10倍数；剩余 ${nonBullCardsText}（按值 ${nonBullValuesText}）`
           };
         }
       }
@@ -200,6 +204,11 @@ function getBestBullInfo(cards) {
 }
 
 function searchBullMatch(bullValueList, nonBullValueList) {
+  let hasMatch = false;
+  let bestPoint = -1;
+  let bestBullPickedValues = [];
+  let bestNonBullPickedValues = [];
+
   for (let a = 0; a < bullValueList[0].length; a += 1) {
     for (let b = 0; b < bullValueList[1].length; b += 1) {
       for (let c = 0; c < bullValueList[2].length; c += 1) {
@@ -208,16 +217,26 @@ function searchBullMatch(bullValueList, nonBullValueList) {
         for (let d = 0; d < nonBullValueList[0].length; d += 1) {
           for (let e = 0; e < nonBullValueList[1].length; e += 1) {
             const sum2 = nonBullValueList[0][d] + nonBullValueList[1][e];
-            return {
-              ok: true,
-              point: sum2 % 10
-            };
+            const point = sum2 % 10;
+            hasMatch = true;
+            if (point > bestPoint) {
+              bestPoint = point;
+              bestBullPickedValues = [bullValueList[0][a], bullValueList[1][b], bullValueList[2][c]];
+              bestNonBullPickedValues = [nonBullValueList[0][d], nonBullValueList[1][e]];
+            }
           }
         }
       }
     }
   }
-  return { ok: false, point: -1 };
+  return hasMatch
+    ? {
+        ok: true,
+        point: bestPoint,
+        bullPickedValues: bestBullPickedValues,
+        nonBullPickedValues: bestNonBullPickedValues
+      }
+    : { ok: false, point: -1, bullPickedValues: [], nonBullPickedValues: [] };
 }
 
 function getValuesWithSwap(rank) {
